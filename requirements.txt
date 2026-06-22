@@ -1,0 +1,12 @@
+# Reader Companion — runtime dependencies.
+# Tested with Python 3.14. Install into a venv:  python -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements.txt
+
+openai>=1.99            # chat.completions.parse (structured outputs) + reasoning_effort + gpt-5
+numpy>=1.24             # embeddings math + clustering (KMeans is implemented locally)
+beautifulsoup4>=4.12    # HTML -> text extraction (uses the stdlib parser; no lxml needed)
+pydantic>=2.6           # schemas for OpenAI Structured Outputs
+
+# Optional niceties (auto-detected if present; the tool runs fine without them):
+python-dotenv>=1.0      # load OPENAI_API_KEY from a local .env
+tqdm>=4.66              # progress bars during the batch run

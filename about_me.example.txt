@@ -1,0 +1,10 @@
+I'm a software engineer who moved into ML/AI a couple of years ago. I care most about
+practical, hands-on material I can apply at work: LLM application patterns (RAG, agents,
+evals), systems and infrastructure, and developer productivity. I have a soft spot for
+sharp, opinionated essays on how to think and how to build, and for the occasional deep
+dive into economics or history.
+
+I save far more than I read, so what I really want is help deciding what's worth my time
+right now — and why it's worth *my* time specifically.
+
+(Replace this with your own description, or delete the file to run without an "about me".)

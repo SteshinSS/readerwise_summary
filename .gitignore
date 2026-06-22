@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+
+# Secrets — Readwise access token must never be committed
+.env
+.env.*
+*.token
+secrets.*
+
+# Python (anticipated)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Local caches (synced library / full text / embeddings / API responses)
+.cache/
+data/cache/
+*.sqlite
+*.duckdb
+
+# Generated report output
+report.html
+*.report.html
+
+# Personal "about me" — copy about_me.example.txt to about_me.txt and edit it
+about_me.txt
