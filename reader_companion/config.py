@@ -48,6 +48,17 @@ EMBED_DIM_MOCK = 256                 # dimensionality of deterministic mock embe
 # --- Concurrency --------------------------------------------------------------------
 DEFAULT_CONCURRENCY = 4             # parallel LLM calls (IO-bound)
 
+# --- Agentic librarian chat (PRODUCT_PLAN §8, v2) -----------------------------------
+# generate.py writes a structured snapshot (every summary + the capped full text) that the
+# chat loads. The chat keeps all the summaries in context and pulls full text on demand.
+SNAPSHOT_PATH = "library.json"       # default structured library snapshot for the chat
+SNAPSHOT_VERSION = 1
+CHAT_MODEL = "gpt-5"                 # the librarian: quality reasoning for ordering/recs
+CHAT_EFFORT = "low"                  # reasoning effort per chat turn (snappy by default)
+CHAT_FULLTEXT_MAX_CHARS = 40_000     # cap on full text stored per doc / returned by the tool
+CHAT_HIGHLIGHTS_IN_CONTEXT = 5       # highlight snippets per doc shown in the catalog
+CHAT_MAX_TOOL_ITERS = 6              # safety cap on tool-call rounds per turn
+
 # --- Cache --------------------------------------------------------------------------
 CACHE_DIR = ".cache/reader_companion"
 # Bump when a prompt or schema changes so stale cached responses are ignored.

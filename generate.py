@@ -23,7 +23,7 @@ import time
 from pathlib import Path
 
 from reader_companion import config
-from reader_companion import clustering, layer1, layer3, parsing, render
+from reader_companion import clustering, layer1, layer3, parsing, render, snapshot
 from reader_companion.cache import Cache
 from reader_companion.llm import make_provider
 from reader_companion.profile import build_profile
@@ -69,6 +69,10 @@ def parse_args(argv=None) -> argparse.Namespace:
     p.add_argument("--about", default=None,
                    help="Free-text 'about me' file (default: ./about_me.txt if present).")
     p.add_argument("--out", default="report.html", help="Output HTML file.")
+    p.add_argument("--snapshot", default=config.SNAPSHOT_PATH,
+                   help="Structured library snapshot for the agentic chat (chat.py).")
+    p.add_argument("--no-snapshot", action="store_true",
+                   help="Skip writing the chat snapshot.")
     p.add_argument("--title", default="Your Reading Library", help="Report title.")
 
     p.add_argument("--mock", action="store_true",
@@ -185,6 +189,16 @@ def main(argv=None) -> int:
     )
     render.write_report(args.out, data)
 
+    # --- chat snapshot (feeds the agentic librarian in chat.py) -----------------------
+    if not args.no_snapshot:
+        snap = snapshot.build_snapshot(
+            jr, clusters, profile,
+            models={"layer1": args.layer1_model, "layer3": args.layer3_model,
+                    "embed": args.embed_model},
+            mock=args.mock, title=args.title, exports_dir=args.exports,
+        )
+        snapshot.write_snapshot(args.snapshot, snap)
+
     failed = [d for d in documents if not d.is_stub and d.error]
     if verbose:
         print()
@@ -197,6 +211,8 @@ def main(argv=None) -> int:
     print(f"\n✓ Report written to {args.out}  ({len(jr.matched) + len(jr.library_only)} documents, "
           f"{len(clusters)} themes) in {time.time() - t0:.1f}s")
     print(f"  Open it in a browser:  open {args.out}")
+    if not args.no_snapshot:
+        print(f"  Chat with your library:  python chat.py  (snapshot: {args.snapshot})")
     return 0
 
 

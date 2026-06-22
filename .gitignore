@@ -24,5 +24,9 @@ data/cache/
 report.html
 *.report.html
 
+# Chat snapshot (contains your article text + highlights — keep it local)
+library.json
+*.snapshot.json
+
 # Personal "about me" — copy about_me.example.txt to about_me.txt and edit it
 about_me.txt

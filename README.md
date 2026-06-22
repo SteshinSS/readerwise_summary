@@ -32,6 +32,9 @@ cp about_me.example.txt about_me.txt   # then edit it
 export OPENAI_API_KEY=sk-...
 python generate.py --out report.html
 open report.html
+
+# 4. Chat with your library (agentic librarian) — uses the snapshot from step 3
+python chat.py
 ```
 
 By default it reads `./Reader_Uploaded_Files` (the library HTML export) and `./readwise-data.csv`
@@ -65,6 +68,51 @@ The report has three parts: a **header** with library stats, an **interest-profi
 with evidence + your about-me, so you can sanity-check what the system thinks you're into), and the
 **table**, grouped by theme, with expandable rows (TL;DR → Why you · How it sits in your library ·
 Takeaways · Basic summary · Your highlights · deep link into Reader).
+
+Each run also writes a **`library.json` snapshot** — the same summaries plus each article's full
+text — which powers the chat (below). Skip it with `--no-snapshot`.
+
+---
+
+## Chat with your library (agentic librarian)
+
+Talk to an entity that has read everything you saved:
+
+```bash
+export OPENAI_API_KEY=sk-...
+python generate.py            # writes report.html AND library.json (the chat snapshot)
+python chat.py                # start chatting in your terminal
+```
+
+```
+📚 Your Reading Library — librarian chat
+   42 documents · 7 themes · 318 highlights
+
+you › In what order should I read my articles about compute governance?
+   · reading full text · The Compute Governance Problem
+librarian › Here's a sensible order — foundations first, then the sharper takes…
+```
+
+**How it works.** Every document's summaries, tags, theme and your interest profile are held in
+the model's context up front, so the librarian can reason across the *whole* library at once
+(ordering, recommending, comparing, finding pieces on a topic). When a summary isn't enough — to
+judge a precise reading order, compare specific arguments, or pull out concrete steps — it calls a
+`read_full_text` tool to pull an article's full text on demand. Answers cite documents by title
+with Reader deep-links.
+
+The snapshot bundles the (capped) full text, so the chat is **self-contained and offline except
+the model calls** — it keeps working even if you later move or delete the export folder.
+
+| Chat flag | Purpose |
+|---|---|
+| `--ask "…"` | Ask one question, print the answer, and exit (good for scripting). |
+| `--snapshot PATH` | Use a specific snapshot (default `library.json`). |
+| `--model` / `--effort` | Override the chat model / reasoning effort (default `gpt-5`, low effort). |
+
+In-session: `/reset` clears the conversation, `/help` lists commands, `/exit` (or Ctrl-D) quits.
+
+> The chat needs a real `OPENAI_API_KEY`. A snapshot generated with `--mock` has placeholder
+> summaries, so chat against it only exercises the plumbing, not real answers.
 
 ---
 
@@ -131,8 +179,9 @@ Run the offline tests with `python tests/test_basics.py`.
 
 ## Roadmap
 
+- ~~An **agentic librarian chat**~~ — **shipped** (`chat.py`, see above).
 - A ranked, explained **"read next"** recommender (modes: *Surprise me · Quick reads · Deep dive ·
   Following your recent thread*).
-- An **agentic librarian chat** — talk to an entity that read everything you saved.
 - **Incremental updates** (content-hash caching so re-runs only reprocess changed docs).
 - Live **API sync + write-back** into Reader (push clusters as tags, picks to ⭐️ Shortlist).
+- Chat niceties: streaming responses, a web UI, and context trimming for very large libraries.

@@ -9,8 +9,11 @@ feature set:
     profile   (F3)  build the temporal, evidence-backed interest profile
     layer3    (F5)  rich, personalised "smart summary", per document (gpt-5, low effort)
     render    (F6)  emit the single self-contained HTML report
+    snapshot  (§8)  write the structured library snapshot the chat loads
+    librarian (§8)  the agentic librarian chat — summaries in context + full text on demand
 
-`generate.py` (at the repo root) wires these together into one batch run.
+`generate.py` (at the repo root) wires the pipeline together into one batch run and writes the
+chat snapshot; `chat.py` (at the repo root) is the terminal chat over that snapshot.
 """
 
 __version__ = "1.0.0"
