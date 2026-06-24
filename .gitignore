@@ -30,3 +30,8 @@ library.json
 
 # Personal "about me" — copy about_me.example.txt to about_me.txt and edit it
 about_me.txt
+
+# Personal Readwise exports (pipeline inputs) — keep local, never commit
+Reader_Uploaded_Files/
+readwise-data.csv
+Readwise/

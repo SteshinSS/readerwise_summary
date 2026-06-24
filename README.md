@@ -32,6 +32,7 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # 2. Real run: describe yourself, then generate
+cp about_me.example.txt about_me.txt
 vim about_me.txt   # then edit it
 export OPENAI_API_KEY=sk-...
 python generate.py --out report.html
