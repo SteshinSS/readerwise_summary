@@ -20,10 +20,10 @@ You need two things:
 
 ### Getting the two exports from Readwise
 
-- **Library HTML** → Reader → Preferences → Profile → **Export Full Files and Articles**; you get `Reader_Uploaded_Files/` containing
-  `Library/` and `Feed/`, one `<Title> (<id>).html` per document.
-- **Highlights CSV** → [Readwise Export](https://readwise.io/export) → **export CSV** (`readwise-data.csv`).
+- [Reader](https://read.readwise.io/new) → Preferences → Profile → **Export Full Files and Articles**; you get .zip. Unpack it to `Reader_Uploaded_Files/`.
+- [Readwise Export](https://readwise.io/export) → **export CSV** (`readwise-data.csv`).
 
+Move `Reader_Uploaded_Files/` and `readwise-data.csv` to the root of this repo.
 
 ### Install and run
 ```bash
