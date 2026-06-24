@@ -83,15 +83,6 @@ def build_report_data(join: JoinResult, clusters: list[Cluster], profile: Profil
             "skipped": [d.title for d in join.stubs],
             "failed": [{"title": d.title, "error": d.error} for d in live if d.error],
         },
-        "profile": {
-            "facets": [
-                {"topic": f.topic, "weight": f.weight, "recency": f.recency,
-                 "evidence": f.evidence}
-                for f in profile.facets
-            ],
-            "about_me": profile.about_me,
-            "synthesis": profile.synthesis,
-        },
         "clusters": cluster_dicts,
         "docs": [_doc_dict(d) for d in live],
         "unmatched_sources": [
@@ -172,18 +163,6 @@ _TEMPLATE = r"""<!DOCTYPE html>
                box-shadow:var(--shadow); padding:18px 20px; margin:18px 0}
   .card h2{font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted);
            margin:0 0 14px}
-  /* profile */
-  .facets{display:grid; gap:12px}
-  .facet{display:grid; grid-template-columns:minmax(120px,200px) 1fr auto; gap:12px; align-items:center}
-  .facet .topic{font-weight:600}
-  .bar{height:8px; background:var(--chip); border-radius:999px; overflow:hidden}
-  .bar>i{display:block; height:100%; background:var(--accent); border-radius:999px}
-  .recency{font-size:12px; color:var(--muted); white-space:nowrap}
-  .evidence{grid-column:1/-1; font-size:13px; color:var(--muted); margin:-4px 0 0 0; padding-left:2px}
-  .evidence li{margin:2px 0}
-  .aboutme{white-space:pre-wrap; background:var(--bg); border:1px dashed var(--line);
-           border-radius:10px; padding:12px 14px; margin-top:6px; font-size:14px}
-  .synthesis{margin:0 0 12px; font-size:15px}
   /* controls */
   .controls{position:sticky; top:0; z-index:5; background:var(--bg);
             padding:12px 0 10px; border-bottom:1px solid var(--line); margin-bottom:8px}
@@ -199,7 +178,13 @@ _TEMPLATE = r"""<!DOCTYPE html>
   .btn:hover{border-color:var(--accent)}
   /* clusters + table */
   .cluster{margin:22px 0}
-  .cluster .chead{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:6px}
+  .cluster .chead{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;
+                  cursor:pointer; user-select:none}
+  .cluster .chead:hover h3{color:var(--accent)}
+  .ccaret{flex:0 0 auto; width:0; height:0; border-left:7px solid var(--muted);
+          border-top:5px solid transparent; border-bottom:5px solid transparent;
+          transition:transform .12s}
+  .cluster.open .ccaret{transform:rotate(90deg)}
   .cluster .chead h3{margin:0; font-size:18px; letter-spacing:-.01em}
   .cluster .chead .cdesc{color:var(--muted); font-size:14px}
   .cluster .chead .cnum{color:var(--muted); font-size:13px; background:var(--chip);
@@ -259,11 +244,6 @@ _TEMPLATE = r"""<!DOCTYPE html>
     <div class="banner" id="h-banner" style="display:none"></div>
   </header>
 
-  <section class="card" id="profile-card">
-    <h2>Your interest profile</h2>
-    <div id="profile-body"></div>
-  </section>
-
   <div class="controls">
     <div class="row">
       <input type="search" id="q" placeholder="Search titles, tags, summaries…" autocomplete="off">
@@ -292,7 +272,7 @@ _TEMPLATE = r"""<!DOCTYPE html>
   <section class="card" id="unmatched-card" style="display:none">
     <h2>Highlights with no matching document</h2>
     <p class="metaline">These sources are in your highlights export but couldn't be matched to a
-    library document (different title, or not exported). They still inform your profile above.</p>
+    library document (different title, or not exported).</p>
     <div id="unmatched-body"></div>
   </section>
 
@@ -333,38 +313,6 @@ _TEMPLATE = r"""<!DOCTYPE html>
   if(META.failed && META.failed.length) notes.push(META.failed.length + " document(s) failed an LLM stage (see footer).");
   if(notes.length){ banner.style.display="block"; banner.textContent = notes.join("  "); }
 
-  // ---- profile ----
-  (function(){
-    var P = DATA.profile, body = document.getElementById("profile-body");
-    if(P.synthesis){ var syn=el("p","synthesis"); syn.textContent=P.synthesis; body.appendChild(syn); }
-    if(P.facets && P.facets.length){
-      var wrap=el("div","facets");
-      P.facets.forEach(function(f){
-        var row=el("div","facet");
-        row.appendChild(el("div","topic",f.topic));
-        var bar=el("div","bar"); var i=el("i");
-        i.style.width=Math.round(Math.max(0,Math.min(1,f.weight))*100)+"%"; bar.appendChild(i);
-        row.appendChild(bar);
-        row.appendChild(el("div","recency",f.recency));
-        if(f.evidence && f.evidence.length){
-          var ev=el("ul","evidence");
-          f.evidence.forEach(function(x){ ev.appendChild(el("li",null,"“"+x+"”")); });
-          row.appendChild(ev);
-        }
-        wrap.appendChild(row);
-      });
-      body.appendChild(wrap);
-    } else {
-      body.appendChild(el("p","metaline","No interest facets were inferred."));
-    }
-    if(P.about_me){
-      var h=el("h4",null,"In your words"); h.style.margin="16px 0 0"; h.style.fontSize="12px";
-      h.style.textTransform="uppercase"; h.style.letterSpacing=".05em"; h.style.color="var(--muted)";
-      body.appendChild(h);
-      body.appendChild(el("div","aboutme",P.about_me));
-    }
-  })();
-
   // ---- populate filters ----
   (function(){
     var fc=document.getElementById("f-cluster");
@@ -386,7 +334,8 @@ _TEMPLATE = r"""<!DOCTYPE html>
 
   // ---- state ----
   var state={q:"",cluster:"",tag:"",effort:"",vibe:"",hlOnly:false,group:true,sort:"title"};
-  var openKeys={};
+  var openKeys={};       // expanded article-detail rows
+  var openClusters={};   // expanded theme groups (folded by default)
 
   function matches(d){
     if(state.cluster!=="" && String(d.cluster_id)!==state.cluster) return false;
@@ -515,16 +464,29 @@ _TEMPLATE = r"""<!DOCTYPE html>
       var order=DATA.clusters.slice().sort(function(a,b){return b.count-a.count;})
         .map(function(c){return String(c.id);});
       if(groups["none"]) order.push("none");
+      // While a search/filter is active, force groups open so matches are never hidden.
+      var filterActive=!!(state.q||state.cluster||state.tag||state.effort||state.vibe||state.hlOnly);
       order.forEach(function(k){
         if(!groups[k]) return;
         var c=clusterById[k];
         var sec=el("div","cluster");
         var head=el("div","chead");
+        head.appendChild(el("span","ccaret"));
         head.appendChild(el("h3",null, c? c.name : "Uncategorised"));
         head.appendChild(el("span","cnum",groups[k].length+" shown"));
         if(c && c.description) head.appendChild(el("span","cdesc",c.description));
+        var body=el("div","cbody");
+        body.appendChild(buildTable(sortDocs(groups[k])));
+        var open=filterActive||!!openClusters[k];
+        if(open) sec.classList.add("open"); else body.style.display="none";
+        head.addEventListener("click", function(){
+          var nowOpen=!sec.classList.contains("open");
+          sec.classList.toggle("open", nowOpen);
+          body.style.display=nowOpen?"":"none";
+          openClusters[k]=nowOpen;
+        });
         sec.appendChild(head);
-        sec.appendChild(buildTable(sortDocs(groups[k])));
+        sec.appendChild(body);
         root.appendChild(sec);
       });
     } else {
@@ -542,8 +504,12 @@ _TEMPLATE = r"""<!DOCTYPE html>
   bind("sort","change",function(e){ state.sort=e.target.value; render(); });
   bind("f-hl","change",function(e){ state.hlOnly=e.target.checked; render(); });
   bind("f-group","change",function(e){ state.group=e.target.checked; render(); });
-  bind("expand-all","click",function(){ DOCS.forEach(function(d){openKeys[d.key]=true;}); render(); });
-  bind("collapse-all","click",function(){ openKeys={}; render(); });
+  bind("expand-all","click",function(){
+    DOCS.forEach(function(d){openKeys[d.key]=true;});
+    DATA.clusters.forEach(function(c){openClusters[String(c.id)]=true;}); openClusters["none"]=true;
+    render();
+  });
+  bind("collapse-all","click",function(){ openKeys={}; openClusters={}; render(); });
 
   // ---- unmatched sources ----
   (function(){

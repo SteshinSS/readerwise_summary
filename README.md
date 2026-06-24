@@ -4,47 +4,47 @@ A cross-library intelligence layer on top of [Readwise Reader](https://read.read
 
 Readwise Reader is excellent at *collecting* and *reading* — but once you have hundreds of saved
 articles, it can't tell you **what to read next**, **why a given piece matters to you
-specifically**, or position each article against the rest of your library. This tool adds that
-layer, working entirely from your **exports** (no Readwise API, no token).
+specifically**, or position each article against the rest of your library. 
 
 It produces a single self-contained **HTML report**: a browsable, sortable, filterable table of
 every article with auto-generated **tags**, a **theme/cluster**, reading time + vibe, and a
 personalised **smart summary** that positions each piece relative to the rest of your library and
 your stated interests.
 
-See [`PRODUCT_PLAN.md`](PRODUCT_PLAN.md) for the full design rationale.
-
----
 
 ## Quick start
 
+You need two things:
+1) Download your Readwise data and put it in the root of the repo
+2) Install and run the script
+
+### Getting the two exports from Readwise
+
+- **Library HTML** → Reader → Preferences → Profile → **Export Full Files and Articles**; you get `Reader_Uploaded_Files/` containing
+  `Library/` and `Feed/`, one `<Title> (<id>).html` per document.
+- **Highlights CSV** → [Readwise Export](https://readwise.io/export) → **export CSV** (`readwise-data.csv`).
+
+
+### Install and run
 ```bash
 # 1. Install (Python 3.10+; tested on 3.14)
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-# 2. Preview the whole thing offline — no API key, no cost (uses placeholder summaries)
-python generate.py --mock --out report.html
-open report.html
-
-# 3. Real run: describe yourself, then generate
-cp about_me.example.txt about_me.txt   # then edit it
+# 2. Real run: describe yourself, then generate
+vim about_me.txt   # then edit it
 export OPENAI_API_KEY=sk-...
 python generate.py --out report.html
 open report.html
 
-# 4. Chat with your library (agentic librarian) — uses the snapshot from step 3
+# 3. Chat with your library (agentic librarian) — uses the snapshot from step 3
 python chat.py
 ```
 
 By default it reads `./Reader_Uploaded_Files` (the library HTML export) and `./readwise-data.csv`
 (the highlights export), and `./about_me.txt` if present.
 
-### Getting the two exports from Readwise
 
-- **Library HTML** → Reader → export your library; you get `Reader_Uploaded_Files/` containing
-  `Library/` and `Feed/`, one `<Title> (<id>).html` per document.
-- **Highlights CSV** → Readwise → export highlights as CSV (`readwise-data.csv`).
 
 ---
 
